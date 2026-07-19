@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NYC Property ROI Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --parchment:#F5EFE4;--parchment-dark:#EDE4D4;--cream:#FDFAF5;
+  --slate:#2C3E50;--slate-light:#5D7A93;
+  --gold:#B8953F;--gold-light:#D4AD57;--sage:#7A9E7E;
+  --amber:#E07C2A;
+}
+html,body{font-family:'Inter',sans-serif;background:var(--parchment);color:var(--slate);line-height:1.5;font-size:14px}
+
+/* Layout */
+.page{max-width:1040px;margin:0 auto;padding:24px 20px}
+.header{text-align:center;margin-bottom:28px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+h1{font-family:'Playfair Display',serif;font-size:clamp(22px,4vw,34px);font-weight:700;color:var(--slate);margin-bottom:8px}
+.sub{font-size:13px;color:var(--slate-light);max-width:560px;margin:0 auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:680px){.grid{grid-template-columns:1fr}}
+
+/* Panels */
+.panel{background:var(--cream);border-radius:14px;padding:20px;border:1px solid var(--parchment-dark)}
+.panel-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--slate);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--parchment-dark)}
+
+/* Form */
+.group{margin-bottom:12px}
+.lbl{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--slate-light);margin-bottom:5px}
+.lbl-sub{font-size:10px;text-transform:none;font-weight:400;color:var(--slate-light);display:block;margin-top:1px;letter-spacing:0}
+.input-wrap{display:flex;align-items:center;border:1.5px solid var(--parchment-dark);border-radius:8px;background:#fff;overflow:hidden;transition:border-color .15s}
+.input-wrap:focus-within{border-color:var(--gold)}
+.pfx,.sfx{padding:0 9px;font-size:12px;color:var(--slate-light);background:var(--parchment);height:36px;display:flex;align-items:center;flex-shrink:0}
+.pfx{border-right:1px solid var(--parchment-dark)}
+.sfx{border-left:1px solid var(--parchment-dark)}
+input[type=number]{flex:1;padding:0 9px;height:36px;border:none;outline:none;font-family:'Inter',sans-serif;font-size:13px;color:var(--slate);background:transparent;width:100%;min-width:0}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--parchment);border:1.5px solid var(--parchment-dark);cursor:pointer;margin-bottom:12px;user-select:none}
+.toggle-row input[type=checkbox]{accent-color:var(--gold);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+.toggle-lbl{font-size:12px;color:var(--slate);font-weight:500}
+.toggle-sub{font-size:10px;color:var(--slate-light);margin-top:1px}
+.rent-fields{transition:opacity .2s}
+.rent-fields.off{opacity:.3;pointer-events:none}
+
+/* Results */
+.metric-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--parchment-dark)}
+.metric-row:last-child{border-bottom:none}
+.metric-lbl{font-size:11px;color:var(--slate-light)}
+.metric-val{font-size:13px;font-weight:600;color:var(--slate);font-family:'Playfair Display',serif}
+.metric-val.pos{color:var(--sage)}
+.metric-val.neg{color:var(--amber)}
+.metric-val.hi{color:var(--gold);font-size:15px}
+.metric-val.hi.pos{color:var(--sage)}
+.metric-val.hi.neg{color:var(--amber)}
+.section-gap{margin-top:16px}
+
+/* Sensitivity */
+.sens-title{font-size:12px;font-weight:600;color:var(--slate);margin-bottom:3px;margin-top:16px}
+.sens-sub{font-size:10px;color:var(--slate-light);margin-bottom:10px;line-height:1.5}
+.sens-scroll{overflow-x:auto}
+.sens-table{width:100%;border-collapse:collapse;font-size:10px;border-radius:6px;overflow:hidden;border:1px solid var(--parchment-dark)}
+.sens-table th{background:var(--parchment-dark);padding:5px 7px;font-family:'Playfair Display',serif;font-weight:600;color:var(--slate);text-align:center;white-space:nowrap}
+.sens-table th.row-head{text-align:left;font-size:9px;color:var(--slate-light)}
+.sens-table td{padding:5px 7px;text-align:center;font-weight:600;font-size:10px;border:1px solid rgba(255,255,255,.4)}
+.sens-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--slate-light)}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* RS notice */
+.rs-notice{margin-top:10px;padding:9px 12px;border-radius:7px;background:rgba(184,149,63,.08);border-left:3px solid var(--gold);font-size:10px;color:var(--slate-light);line-height:1.6;display:none}
+.rs-notice.show{display:block}
+.rs-notice strong{color:var(--slate)}
+
+/* Disclaimer */
+.disclaimer{font-size:9px;color:var(--slate-light);margin-top:14px;line-height:1.6;padding-top:10px;border-top:1px solid var(--parchment-dark);font-style:italic}
+
+/* Footer */
+.calc-footer{text-align:center;margin-top:20px;font-size:11px;color:var(--slate-light)}
+.calc-footer a{color:var(--gold);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="eyebrow">Manhattan Investment Underwriting</div>
+    <h1>NYC Property ROI Calculator</h1>
+    <p class="sub">Model IRR, NPV, payback period, and cash-on-cash return on any Manhattan acquisition. Toggle off rental income to model a pied-à-terre or hold strategy.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- INPUTS -->
+    <div class="panel">
+      <div class="panel-title">Acquisition</div>
+
+      <div class="group">
+        <label class="lbl" for="c-price">Purchase Price</label>
+        <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-price" value="1500000" step="25000" min="100000" oninput="calc()"></div>
+      </div>
+      <div class="two">
+        <div class="group">
+          <label class="lbl" for="c-down">Down Payment</label>
+          <div class="input-wrap"><input type="number" id="c-down" value="20" min="10" max="100" step="5" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-rate">Interest Rate</label>
+          <div class="input-wrap"><input type="number" id="c-rate" value="7.0" step="0.125" min="0" max="15" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+      </div>
+      <div class="two">
+        <div class="group">
+          <label class="lbl" for="c-closing">Closing Costs</label>
+          <div class="input-wrap"><input type="number" id="c-closing" value="2.5" step="0.25" min="0" max="15" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-hold">Holding Period</label>
+          <div class="input-wrap"><input type="number" id="c-hold" value="10" step="1" min="1" max="30" oninput="calc()"><span class="sfx">yrs</span></div>
+        </div>
+      </div>
+
+      <div class="panel-title section-gap">Annual Carrying Costs</div>
+      <div class="group">
+        <label class="lbl" for="c-carry">Maintenance / Common Charges + Property Tax<span class="lbl-sub">Full annual total</span></label>
+        <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-carry" value="24000" step="500" oninput="calc()"></div>
+      </div>
+      <div class="three">
+        <div class="group">
+          <label class="lbl" for="c-ins">Insurance</label>
+          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-ins" value="1200" step="100" oninput="calc()"></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-capex">CapEx Reserve</label>
+          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-capex" value="3000" step="500" oninput="calc()"></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-pied">Pied-à-Terre Tax<span class="lbl-sub">Annual; $0 if primary</span></label>
+          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-pied" value="0" step="1000" oninput="calc()"></div>
+        </div>
+      </div>
+
+      <div class="panel-title section-gap">Rental Income</div>
+      <label class="toggle-row" for="c-no-rent">
+        <input type="checkbox" id="c-no-rent" onchange="toggleRent()">
+        <div>
+          <div class="toggle-lbl">Not renting — pied-à-terre or hold</div>
+          <div class="toggle-sub">Check this to model appreciation-only returns</div>
+        </div>
+      </label>
+      <div class="rent-fields" id="rent-fields">
+        <div class="group">
+          <label class="lbl" for="c-rent">Monthly Gross Rent</label>
+          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-rent" value="6500" step="100" oninput="calc()"></div>
+        </div>
+        <div class="three">
+          <div class="group">
+            <label class="lbl" for="c-rg">Rent Growth<span class="lbl-sub">% per year</span></label>
+            <div class="input-wrap"><input type="number" id="c-rg" value="3" step="0.5" min="0" max="10" oninput="calc()"><span class="sfx">%</span></div>
+          </div>
+          <div class="group">
+            <label class="lbl" for="c-vac">Vacancy</label>
+            <div class="input-wrap"><input type="number" id="c-vac" value="3" step="0.5" min="0" max="30" oninput="calc()"><span class="sfx">%</span></div>
+          </div>
+          <div class="group">
+            <label class="lbl" for="c-mgmt">Mgmt Fee</label>
+            <div class="input-wrap"><input type="number" id="c-mgmt" value="5" step="0.5" min="0" max="15" oninput="calc()"><span class="sfx">%</span></div>
+          </div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-sublet">Annual Sublet / Misc Fees<span class="lbl-sub">Co-op sublet surcharges, application costs</span></label>
+          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="c-sublet" value="0" step="200" oninput="calc()"></div>
+        </div>
+        <div id="rs-notice" class="rs-notice">
+          <strong>Rent stabilization note:</strong> If your unit is in a building with 6+ apartments built before 1974 (or receiving 421-a / J-51 benefits), it may be rent-stabilized. Under HSTPA 2019, most deregulation pathways were eliminated. Annual increases are set by the NYC Rent Guidelines Board (RGBO) — typically 2 to 4%. If stabilization is possible, cap your rent growth input at 2 to 2.5% and confirm status via NYC DHCR before purchase.
+        </div>
+      </div>
+
+      <div class="panel-title section-gap">Appreciation &amp; Exit</div>
+      <div class="two">
+        <div class="group">
+          <label class="lbl" for="c-appr">Annual Appreciation</label>
+          <div class="input-wrap"><input type="number" id="c-appr" value="3" step="0.5" min="0" max="15" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-sell">Seller Costs at Exit<span class="lbl-sub">Commission + transfer taxes</span></label>
+          <div class="input-wrap"><input type="number" id="c-sell" value="7" step="0.5" min="0" max="15" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+      </div>
+      <div class="two">
+        <div class="group">
+          <label class="lbl" for="c-flip">Flip Tax at Exit<span class="lbl-sub">Co-op only; 0 for condo</span></label>
+          <div class="input-wrap"><input type="number" id="c-flip" value="0" step="0.5" min="0" max="5" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+        <div class="group">
+          <label class="lbl" for="c-hurdle">Hurdle Rate (for NPV)<span class="lbl-sub">Your required return</span></label>
+          <div class="input-wrap"><input type="number" id="c-hurdle" value="6" step="0.5" min="1" max="20" oninput="calc()"><span class="sfx">%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="panel">
+      <div class="panel-title">Year-One Metrics</div>
+
+      <div class="metric-row"><span class="metric-lbl">Total Cash at Closing</span><span class="metric-val" id="r-cash">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Monthly Mortgage Payment</span><span class="metric-val" id="r-mort">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Gross Annual Rent</span><span class="metric-val" id="r-rent">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Annual Operating Costs</span><span class="metric-val" id="r-ops">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Net Operating Income (NOI)</span><span class="metric-val" id="r-noi">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Cap Rate</span><span class="metric-val hi" id="r-cap">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Net Annual Cash Flow</span><span class="metric-val" id="r-cf">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Cash-on-Cash Return</span><span class="metric-val hi" id="r-coc">—</span></div>
+
+      <div class="panel-title section-gap">Multi-Year Return (Hold Period)</div>
+      <div class="metric-row"><span class="metric-lbl">Exit Property Value</span><span class="metric-val" id="r-exitval">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Net Exit Proceeds</span><span class="metric-val" id="r-exitnet">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">IRR (Internal Rate of Return)</span><span class="metric-val hi" id="r-irr">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">NPV at Hurdle Rate</span><span class="metric-val" id="r-npv">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Payback Period</span><span class="metric-val" id="r-payback">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Equity Multiple</span><span class="metric-val" id="r-mult">—</span></div>
+
+      <!-- SENSITIVITY -->
+      <div class="sens-title">IRR Sensitivity Matrix</div>
+      <div class="sens-sub">Estimated 10-year IRR across rent growth and appreciation combinations. Current inputs highlighted in gold. In non-rental mode, shows appreciation-only returns.</div>
+      <div class="sens-scroll"><table class="sens-table" id="sens"></table></div>
+      <div class="sens-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#FBEADE"></div>Below 4%</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#F5E8C8"></div>4–6%</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#E8EFE8"></div>6–8%</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#D4E8D4"></div>8–10%</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#BDDABD"></div>10%+</div>
+      </div>
+
+      <div class="disclaimer">Figures are estimates based on stated inputs and standard 30-year fixed amortization. Does not incorporate depreciation tax benefits, NYC income tax on rental income, rent stabilization restrictions, special assessments, or individual tax circumstances. Not financial or legal advice. Verify all assumptions with your accountant and attorney before making investment decisions.</div>
+    </div>
+  </div>
+
+  <div class="calc-footer">
+    Built for <a href="https://linktr.ee/vwinnyc" target="_blank">eldoradoandsons.com</a> &middot; V Win, Licensed NYC Real Estate Advisor
+  </div>
+</div>
+
+<script>
+// ── Helpers ─────────────────────────────────────────────────────
+function v(id){var el=document.getElementById(id);return el?parseFloat(el.value)||0:0;}
+function fmt(n){var abs=Math.round(Math.abs(n)).toLocaleString();return n<0?'-$'+abs:'$'+abs;}
+function fmtPct(n,decimals){return(n>=0?'+':'')+n.toFixed(decimals===undefined?2:decimals)+'%';}
+function setEl(id,text,cls){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=text;
+  el.className='metric-val'+(cls?' '+cls:'');
+}
+
+// ── Mortgage payment (PMT) ───────────────────────────────────────
+function pmt(annualRate,years,principal){
+  if(principal<=0)return 0;
+  if(annualRate===0)return principal/(years*12);
+  var r=annualRate/12;
+  var n=years*12;
+  return principal*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+}
+
+// ── Mortgage balance after N years ──────────────────────────────
+function mortBal(principal,annualRate,totalYears,elapsedYears){
+  if(principal<=0)return 0;
+  if(annualRate===0)return principal*(1-elapsedYears/totalYears);
+  var r=annualRate/12;
+  var n=totalYears*12;
+  var p=elapsedYears*12;
+  var monthly=pmt(annualRate,totalYears,principal);
+  return monthly*(1-Math.pow(1+r,p-n))/r;
+}
+
+// ── Newton-Raphson IRR ───────────────────────────────────────────
+function solveIRR(cfs){
+  // Verify sign change exists
+  var hasPos=false,hasNeg=false;
+  cfs.forEach(function(c){if(c>0)hasPos=true;if(c<0)hasNeg=true;});
+  if(!hasPos||!hasNeg)return null;
+  var r=0.08;
+  for(var i=0;i<300;i++){
+    var f=0,df=0;
+    for(var t=0;t<cfs.length;t++){
+      var disc=Math.pow(1+r,t);
+      f+=cfs[t]/disc;
+      if(t>0)df-=t*cfs[t]/(disc*(1+r));
+    }
+    if(Math.abs(df)<1e-12)break;
+    var rn=r-f/df;
+    if(Math.abs(rn-r)<0.0000001){return rn;}
+    r=rn;
+    if(r<-0.999||r>50)return null;
+  }
+  return null;
+}
+
+// ── NPV ─────────────────────────────────────────────────────────
+function npv(rate,cfs){
+  return cfs.reduce(function(s,c,t){return s+c/Math.pow(1+rate,t);},0);
+}
+
+// ── Build annual cash flow array ─────────────────────────────────
+function buildCFs(p){
+  var loan=p.price*(1-p.down/100);
+  var monthly=pmt(p.rate/100,30,loan);
+  var annualDebt=monthly*12;
+  var cfs=[];
+  // t=0: initial outlay
+  cfs.push(-(p.price*p.down/100 + p.price*p.closing/100));
+  var cumCash=cfs[0];
+  var payback=null;
+  for(var yr=1;yr<=p.hold;yr++){
+    var grossRent=p.noRent?0:p.rent*12*Math.pow(1+p.rg/100,yr-1)*(1-p.vac/100);
+    var mgmtFee=p.noRent?0:grossRent*p.mgmt/100;
+    var opCosts=p.carry+p.ins+p.capex+p.pied+(p.noRent?0:p.sublet+mgmtFee);
+    var noi=grossRent-opCosts;
+    var cf=noi-annualDebt;
+    cfs.push(cf);
+    cumCash+=cf;
+    if(!payback&&cumCash>0)payback=yr;
+  }
+  // Exit
+  var exitVal=p.price*Math.pow(1+p.appr/100,p.hold);
+  var bal=Math.max(0,mortBal(loan,p.rate/100,30,p.hold));
+  var sellCosts=exitVal*(p.sell/100+p.flip/100);
+  var netProc=exitVal-bal-sellCosts;
+  cfs[p.hold]+=netProc;
+  // Check payback via exit
+  if(!payback){
+    var tot=cfs.reduce(function(s,c){return s+c;},0);
+    if(tot>0)payback=p.hold;
+  }
+  return{cfs:cfs,monthly:monthly,annualDebt:annualDebt,loan:loan,
+         exitVal:exitVal,netProc:netProc,payback:payback,bal:bal};
+}
+
+// ── Cell color ───────────────────────────────────────────────────
+function cellColor(irr){
+  if(irr===null)return{bg:'#F0EDE8',fg:'#8A9BB5'};
+  if(irr<4)   return{bg:'#FBEADE',fg:'#C07A40'};
+  if(irr<6)   return{bg:'#F5E8C8',fg:'#A07030'};
+  if(irr<8)   return{bg:'#E8EFE8',fg:'#4A7E4E'};
+  if(irr<10)  return{bg:'#D4E8D4',fg:'#3D7040'};
+  return      {bg:'#BDDABD',fg:'#2E6030'};
+}
+
+// ── Main calc ────────────────────────────────────────────────────
+function calc(){
+  var noRent=document.getElementById('c-no-rent').checked;
+  var p={
+    price:   v('c-price'),   down:   v('c-down'),
+    rate:    v('c-rate'),    closing:v('c-closing'),
+    hold:    Math.round(v('c-hold'))||10,
+    carry:   v('c-carry'),   ins:    v('c-ins'),
+    capex:   v('c-capex'),   pied:   v('c-pied'),
+    noRent:  noRent,
+    rent:    v('c-rent'),    rg:     v('c-rg'),
+    vac:     v('c-vac'),     mgmt:   v('c-mgmt'),
+    sublet:  v('c-sublet'),
+    appr:    v('c-appr'),    sell:   v('c-sell'),
+    flip:    v('c-flip'),    hurdle: v('c-hurdle')
+  };
+  if(p.price<=0)return;
+
+  var m=buildCFs(p);
+
+  // Year-1 derived
+  var grossRent1=noRent?0:p.rent*12*(1-p.vac/100);
+  var mgmtFee1=noRent?0:grossRent1*p.mgmt/100;
+  var opCosts1=p.carry+p.ins+p.capex+p.pied+(noRent?0:p.sublet+mgmtFee1);
+  var noi1=grossRent1-opCosts1;
+  var capRate=noRent||p.price===0?null:noi1/p.price*100;
+  var cf1=noi1-m.annualDebt;
+  var totalCash=p.price*(p.down/100)+p.price*(p.closing/100);
+  var coc=noRent||totalCash===0?null:cf1/totalCash*100;
+
+  // Multi-year
+  var irrRaw=solveIRR(m.cfs);
+  var irrPct=irrRaw!==null?irrRaw*100:null;
+  var npvVal=npv(p.hurdle/100,m.cfs);
+  var totalIn=m.cfs.reduce(function(s,c){return s+(c<0?-c:0);},0);
+  var totalOut=m.cfs.reduce(function(s,c){return s+(c>0?c:0);},0);
+  var mult=totalIn>0?(totalIn+totalOut)/totalIn:null;
+
+  // Set results
+  setEl('r-cash', fmt(totalCash));
+  setEl('r-mort', fmt(m.monthly)+'/mo');
+  setEl('r-rent', noRent?'—':fmt(grossRent1));
+  setEl('r-ops',  fmt(opCosts1), opCosts1>0?'neg':'');
+  setEl('r-noi',  noRent?'N/A':fmt(noi1), (!noRent&&noi1>=0)?'pos':((!noRent&&noi1<0)?'neg':''));
+  setEl('r-cap',  capRate===null?'N/A':fmtPct(capRate), 'hi'+(capRate!==null&&capRate>3?' pos':capRate!==null?' neg':''));
+  setEl('r-cf',   fmt(cf1), cf1>=0?'pos':'neg');
+  setEl('r-coc',  coc===null?'N/A':fmtPct(coc), 'hi'+(coc!==null&&coc>=0?' pos':coc!==null?' neg':''));
+  setEl('r-exitval', fmt(m.exitVal));
+  setEl('r-exitnet', fmt(m.netProc), m.netProc>=0?'pos':'neg');
+  setEl('r-irr',  irrPct===null?'N/A':fmtPct(irrPct), 'hi'+(irrPct!==null&&irrPct>p.hurdle?' pos':irrPct!==null?' neg':''));
+  setEl('r-npv',  fmt(npvVal)+(npvVal>=0?' ✓':' ✗'), npvVal>=0?'pos':'neg');
+  setEl('r-payback', m.payback?m.payback+' yr'+(m.payback===1?'':'s')+' (within hold)':'Beyond hold period');
+  setEl('r-mult', mult!==null?mult.toFixed(2)+'×':'—', mult!==null&&mult>=1?'pos':'');
+
+  // RS notice
+  var rsEl=document.getElementById('rs-notice');
+  if(rsEl){rsEl.className='rs-notice'+((!noRent&&p.rg>2.5)?' show':'');}
+
+  // Sensitivity matrix
+  var rgRows=noRent?[0]:[1,2,3,4,5];
+  var apprCols=[1,2,3,4,5];
+  var html='<thead><tr><th class="row-head">'+(noRent?'Hold':'Rent ↓ / Appr. →')+'</th>';
+  apprCols.forEach(function(a){html+='<th>'+a+'%</th>';});
+  html+='</tr></thead><tbody>';
+  rgRows.forEach(function(rg){
+    html+='<tr>';
+    html+='<th class="row-head" style="background:var(--parchment-dark);text-align:left;padding:5px 7px;font-weight:600">'+(noRent?'Hold only':rg+'% rent')+'</th>';
+    apprCols.forEach(function(ap){
+      var p2=Object.assign({},p,{rg:rg,appr:ap});
+      var m2=buildCFs(p2);
+      var ir2=solveIRR(m2.cfs);
+      var pct2=ir2!==null?ir2*100:null;
+      var c=cellColor(pct2);
+      var isBase=(noRent||(rg===Math.round(p.rg)))&&ap===Math.round(p.appr);
+      var outline=isBase?'outline:2px solid var(--gold);outline-offset:-2px;':'';
+      html+='<td style="background:'+c.bg+';color:'+c.fg+';'+outline+'">'+(pct2!==null?pct2.toFixed(1)+'%':'—')+'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  document.getElementById('sens').innerHTML=html;
+}
+
+function toggleRent(){
+  var noRent=document.getElementById('c-no-rent').checked;
+  var fields=document.getElementById('rent-fields');
+  if(fields)fields.className='rent-fields'+(noRent?' off':'');
+  calc();
+}
+
+// Run on load
+window.addEventListener('DOMContentLoaded',calc);
+</script>
+</body>
+</html>
