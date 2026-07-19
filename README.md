@@ -1,9 +1,4 @@
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NYC Condo &amp; Co-op Guide</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="coop-investor-guide.css">
+
 
 <div class="divider"></div>
 <div class="section-tight" id="cta">
