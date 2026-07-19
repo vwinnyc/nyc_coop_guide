@@ -11,7 +11,6 @@
   </div>
 </div>
 
-<footer>
-  <span class="footer-brand">NYC Condo &amp; Co-op Guide</span>
-  <span class="footer-legal">Information is educational, not legal advice.</span>
+<footer><i>
+  <span class="footer-legal">NYC Condo &amp; Co-op guide is educational, not legal advice.</span></i>
 </footer>
